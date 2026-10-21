@@ -5,9 +5,25 @@ from datetime import datetime
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
-DATA_FILE = "tasks.json"
+import tempfile
+import shutil
 
-app = Flask(__name__, static_folder="static")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+# On Vercel serverless, root repository is read-only. Use temp directory for writing tasks.
+if os.environ.get("VERCEL"):
+    DATA_FILE = os.path.join(tempfile.gettempdir(), "tasks.json")
+    bundled_file = os.path.join(BASE_DIR, "tasks.json")
+    if not os.path.exists(DATA_FILE) and os.path.exists(bundled_file):
+        try:
+            shutil.copyfile(bundled_file, DATA_FILE)
+        except Exception:
+            pass
+else:
+    DATA_FILE = os.path.join(BASE_DIR, "tasks.json")
+
+app = Flask(__name__, static_folder=STATIC_DIR)
 CORS(app)
 
 
