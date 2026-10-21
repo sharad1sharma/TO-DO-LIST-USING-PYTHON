@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>To-Do List</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="todo-container">
+    <div class="header">
+      <h2>To-Do List</h2>
+    </div>
+
+    <!-- Input Box & Add Button -->
+    <form id="todo-form" class="input-section">
+      <input 
+        type="text" 
+        id="todo-input" 
+        placeholder="Enter a task..." 
+        autocomplete="off" 
+        required
+      >
+      <button type="submit" id="add-btn">Add Task</button>
+    </form>
+
+    <!-- Filter Buttons -->
+    <div class="filter-section">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="active">Active</button>
+      <button class="filter-btn" data-filter="completed">Completed</button>
+    </div>
+
+    <!-- Tasks List -->
+    <ul id="todo-list" class="todo-list">
+      <!-- Tasks rendered here -->
+    </ul>
+
+    <!-- Footer Controls -->
+    <div class="footer">
+      <span id="task-count">0 tasks left</span>
+      <button id="clear-completed-btn">Clear Completed</button>
+    </div>
+
+    <!-- Copyright Footer with CSS3 & JS Pop Animation -->
+    <footer class="app-copyright-footer" id="copyright-footer">
+      <div class="copyright-card pop-effect" id="copyright-card">
+        <p class="rights-statement">
+          All Rights Reserved. All other trademarks and copyrights are the property of their respective holders.
+        </p>
+        <p class="author-statement">
+          Copyright &copy; 2026<br>
+          <strong class="author-name">Sharad Sharma</strong>.
+        </p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

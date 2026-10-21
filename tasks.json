@@ -1,0 +1,18 @@
+[
+    {
+        "id": "bfbf70e3",
+        "text": "Run Test",
+        "completed": true,
+        "priority": "medium",
+        "category": "General",
+        "created_at": "2026-10-21T22:51:48.395954"
+    },
+    {
+        "id": "t9g0h1i2",
+        "text": "Review synchronized tasks.json database",
+        "completed": false,
+        "priority": "low",
+        "category": "Study",
+        "created_at": "2026-10-21T22:00:00"
+    }
+]
