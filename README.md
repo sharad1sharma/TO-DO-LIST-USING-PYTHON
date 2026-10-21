@@ -1,3 +1,6 @@
+<img width="521" height="566" alt="Screenshot 2026-10-21 231914" src="https://github.com/user-attachments/assets/45c5d2e1-2293-490f-b908-08d888c462a8" />
+
+
 # 📝 To-Do List Application
 
 A Python and Web-based To-Do List Application with synchronized persistence across both a Desktop GUI (Tkinter) and a Classic Web Frontend (HTML5, CSS3, JavaScript), connected seamlessly via a Flask REST API backend.
