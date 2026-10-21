@@ -11,6 +11,38 @@ const clearCompletedBtn = document.getElementById('clear-completed-btn');
 const filterButtons = document.querySelectorAll('.filter-btn');
 const copyrightCard = document.getElementById('copyright-card');
 
+// Default starter tasks
+const DEFAULT_TASKS = [
+  {
+    id: "t1a2b3c4",
+    text: "Explore TaskFlow To-Do List Application",
+    completed: true
+  },
+  {
+    id: "t5d6e7f8",
+    text: "Add your first custom task above",
+    completed: false
+  }
+];
+
+// LocalStorage helpers for seamless offline/serverless persistence
+function saveLocalBackup() {
+  try {
+    localStorage.setItem('taskflow_tasks', JSON.stringify(tasks));
+  } catch (e) {}
+}
+
+function loadLocalBackup() {
+  try {
+    const raw = localStorage.getItem('taskflow_tasks');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_TASKS;
+}
+
 // Pop Animation Trigger via JS
 function triggerPopAnimation() {
   if (!copyrightCard) return;
@@ -25,17 +57,24 @@ if (copyrightCard) {
   copyrightCard.addEventListener('click', triggerPopAnimation);
 }
 
-// Fetch tasks from Python Flask backend
+// Fetch tasks (Hybrid: API sync with localStorage fallback)
 async function loadTasks() {
   try {
     const res = await fetch('/api/tasks');
-    if (!res.ok) throw new Error('Network error');
-    const data = await res.json();
-    tasks = data.tasks || [];
-    renderTasks();
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.tasks) && data.tasks.length > 0) {
+        tasks = data.tasks;
+        saveLocalBackup();
+        renderTasks();
+        return;
+      }
+    }
   } catch (error) {
-    console.error('Error fetching tasks:', error);
+    // API not reachable in pure static CDN environment
   }
+  tasks = loadLocalBackup();
+  renderTasks();
 }
 
 // Add new task
@@ -44,25 +83,34 @@ todoForm.addEventListener('submit', async function (e) {
   const text = todoInput.value.trim();
   if (!text) return;
 
+  const newTask = {
+    id: 't_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+    text: text,
+    completed: false
+  };
+
+  tasks.unshift(newTask);
+  todoInput.value = '';
+  saveLocalBackup();
+  renderTasks();
+  triggerPopAnimation();
+
+  // Sync to API in background if online
   try {
     const res = await fetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: text })
     });
-
     if (res.ok) {
       const data = await res.json();
-      if (data.task) {
-        tasks.unshift(data.task);
-        todoInput.value = '';
-        renderTasks();
-        triggerPopAnimation(); // Subtle pop trigger on task add
+      if (data.task && data.task.id) {
+        newTask.id = data.task.id;
+        saveLocalBackup();
       }
     }
-  } catch (error) {
-    console.error('Failed to add task:', error);
-    alert('Could not save task to backend.');
+  } catch (e) {
+    // Seamlessly saved in localStorage
   }
 });
 
@@ -72,42 +120,34 @@ async function toggleTask(id) {
   if (!task) return;
 
   task.completed = !task.completed;
+  saveLocalBackup();
   renderTasks();
 
   try {
     await fetch(`/api/tasks/${id}/toggle`, { method: 'POST' });
-  } catch (error) {
-    console.error('Failed to toggle task:', error);
-  }
+  } catch (e) {}
 }
 
 // Delete task
 async function deleteTask(id) {
+  tasks = tasks.filter(t => String(t.id) !== String(id));
+  saveLocalBackup();
+  renderTasks();
+
   try {
-    const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      tasks = tasks.filter(t => String(t.id) !== String(id));
-      renderTasks();
-    }
-  } catch (error) {
-    console.error('Failed to delete task:', error);
-  }
+    await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+  } catch (e) {}
 }
 
 // Clear completed tasks
 clearCompletedBtn.addEventListener('click', async function () {
-  const completedTasks = tasks.filter(t => t.completed);
-  if (completedTasks.length === 0) return;
+  tasks = tasks.filter(t => !t.completed);
+  saveLocalBackup();
+  renderTasks();
 
   try {
-    const res = await fetch('/api/tasks/clear-completed', { method: 'DELETE' });
-    if (res.ok) {
-      tasks = tasks.filter(t => !t.completed);
-      renderTasks();
-    }
-  } catch (error) {
-    console.error('Failed to clear completed tasks:', error);
-  }
+    await fetch('/api/tasks/clear-completed', { method: 'DELETE' });
+  } catch (e) {}
 });
 
 // Filter tabs
@@ -171,22 +211,6 @@ function renderTasks() {
   const activeCount = tasks.filter(t => !t.completed).length;
   taskCount.textContent = `${activeCount} task${activeCount === 1 ? '' : 's'} left`;
 }
-
-// Periodic background check to stay in sync with tasks.json
-setInterval(async () => {
-  try {
-    const res = await fetch('/api/tasks');
-    if (res.ok) {
-      const data = await res.json();
-      if (JSON.stringify(data.tasks) !== JSON.stringify(tasks)) {
-        tasks = data.tasks || [];
-        renderTasks();
-      }
-    }
-  } catch (e) {
-    // Quiet fail on network loss
-  }
-}, 4000);
 
 // Initial load
 loadTasks();
